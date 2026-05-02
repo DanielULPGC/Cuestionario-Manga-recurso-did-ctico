@@ -878,7 +878,7 @@
 
 
 <!-- ══════════════════ CATÁLOGO COMPLETO ══════════════════ -->
-<div class="catalog-section catalog-collapsed" id="catalogo">
+<div class="catalog-section" id="catalogo">
   <div class="catalog-header">
     <h2 class="catalog-title">Catálogo completo del fondo</h2>
     <p class="catalog-sub">279 títulos · Pasa el cursor sobre cada tarjeta para ver la descripción pedagógica · Los filtros de uso y nivel operan sobre este catálogo y la línea del tiempo simultáneamente · Busca por título, autor o tema libre</p>
@@ -3610,17 +3610,6 @@
     </div>
   </div>
 </div>
-
-<script>
-// M11 — Registro del Service Worker (PWA offline)
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .catch(err => {
-        // SW no disponible en file:// — solo funciona vía HTTP
-      });
-  });
-}
-</script>
+  <script src="sw-register.js"></script>
 </body>
 </html>

@@ -3909,6 +3909,7 @@ function lomloeConnection(uso) {
 
 function openFicha(card) {
   if (!card) return;
+  if (typeof card.querySelector !== 'function') return;
   const _opener = document.activeElement;
   const title  = card.querySelector('.cat-title')?.textContent?.trim() || '';
   const author = card.querySelector('.cat-author')?.textContent?.trim() || '';
@@ -4177,6 +4178,44 @@ function filterByTitle(title) {
 }
 
 document.addEventListener('DOMContentLoaded', updateCompDrawer);
+
+// ═══ Parche v5.9 — Funciones delegadas data-action (CSP) ═══
+window.openFichaCard    = function({ target }) {
+  const card = target.closest('.cat-card');
+  if (!card || typeof card.querySelector !== 'function') return;
+  openFicha(card);
+};
+window.openRubricaCard  = function({ target }) {
+  const card = target.closest('.cat-card');
+  if (!card) return;
+  openRubrica(card);
+};
+window.openLecturaCard  = function({ target }) {
+  const card = target.closest('.cat-card');
+  if (!card) return;
+  openLectura(card);
+};
+window.toggleCompCard   = function({ target }) {
+  const btn = target.closest('.cat-comp-btn') || target;
+  toggleComp(btn);
+};
+window.alumnoPaso2      = function() { if (typeof _alumnoState!=='undefined') { _alumnoState.paso=2; _alumnoRender(); } };
+window.alumnoPaso3      = function() { if (typeof _alumnoState!=='undefined') { _alumnoState.paso=3; _alumnoRender(); } };
+window.alumnoPaso4      = function() { if (typeof _alumnoState!=='undefined') { _alumnoState.paso=4; _alumnoRender(); } };
+window.alumnoPasoBack3  = function() { if (typeof _alumnoState!=='undefined') { _alumnoState.paso=3; _alumnoRender(); } };
+window.alumnoVerFicha   = function() {
+  const estado = typeof _alumnoState!=='undefined' ? _alumnoState : {};
+  const cat    = (typeof CATALOGO_EFECTIVO!=='undefined' && CATALOGO_EFECTIVO.length)
+    ? CATALOGO_EFECTIVO : (typeof CATALOGO!=='undefined' ? CATALOGO : []);
+  const entrada = cat.find(t=>t.titulo===estado.titulo);
+  const vCard = _makeVirtualCard(estado.titulo||'', estado.autor||'',
+    (entrada?.tip||'').slice(0,180), (estado.uso||'visual'), (estado.nivel||'secundaria'));
+  openFicha(vCard);
+};
+window.openLecturaFor = openLecturaFor;
+window.openQuizFor    = openQuizFor;
+window.openRubricaFor = openRubricaFor;
+
 
 // ══════════════════════════════════════════════════════════════════
 // CONEXIÓN API GEMINI
@@ -5875,7 +5914,7 @@ document.addEventListener('DOMContentLoaded', function() {
 })();
 
 // ══ CATÁLOGO — COLAPSO/EXPANSIÓN ════════════════════════════
-let catalogExpanded = false;
+let catalogExpanded = true;  // FIX: catálogo visible por defecto
 
 function toggleCatalogExplore() {
   catalogExpanded = !catalogExpanded;
@@ -6048,15 +6087,19 @@ function renderCatalog() {
     const actions = document.createElement('div');
     actions.className = 'cat-card-actions';
     actions.innerHTML =
-      `<button type="button" class="cat-comp-btn" ` +
-        `onclick="toggleComp(this)" title="Añadir al comparador">⊕ Comparar</button>` +
-      `<button type="button" class="cat-ficha-btn" ` +
-        `onclick="openFicha(this.closest('.cat-card'))" title="Ver ficha de aula">Ficha aula</button>` +
-      `<button type="button" class="cat-ficha-btn" ` +
-        `style="background:rgba(42,58,122,.08);border-color:rgba(42,58,122,.3)" ` +
-        `onclick="openRubrica(this.closest('.cat-card'))" title="Generar rúbrica IA">Rúbrica IA</button>` +
-      `<button type="button" class="cat-lectura-btn" ` +
-        `onclick="openLectura(this.closest('.cat-card'))" title="Ficha de lectura guiada">Lectura</button>`;
+      `<button type="button" class="cat-comp-btn"
+               data-action="toggleCompCard"
+               title="Añadir al comparador">⊕ Comparar</button>` +
+      `<button type="button" class="cat-ficha-btn"
+               data-action="openFichaCard"
+               title="Ver ficha de aula">Ficha aula</button>` +
+      `<button type="button" class="cat-ficha-btn"
+               style="background:rgba(42,58,122,.08);border-color:rgba(42,58,122,.3)"
+               data-action="openRubricaCard"
+               title="Generar rúbrica IA">Rúbrica IA</button>` +
+      `<button type="button" class="cat-lectura-btn"
+               data-action="openLecturaCard"
+               title="Ficha de lectura guiada">Lectura</button>`;
     body.appendChild(actions);
 
     // Enlace OPAC (opcional)
@@ -19619,9 +19662,9 @@ function _alumnoPaso3(body) {
       <div class="alumno-lectura-inline" id="alumnoLecturaInline"></div>
       <div class="alumno-paso-btns">
         <button type="button" class="alumno-btn alumno-btn-sec"
-                onclick="_alumnoState.paso=2;_alumnoRender();">← Volver</button>
+                data-action="alumnoPaso2">← Volver</button>
         <button type="button" class="alumno-btn alumno-btn-pri"
-                onclick="_alumnoState.paso=4;_alumnoRender();">
+                data-action="alumnoPaso4">
           Continuar → Quiz
         </button>
       </div>
@@ -19665,7 +19708,7 @@ function _alumnoPaso4(body) {
       <h3 class="alumno-paso-title">Quiz y reflexión</h3>
       <div class="alumno-paso-btns" style="margin-bottom:1rem">
         <button type="button" class="alumno-btn alumno-btn-sec"
-                onclick="_alumnoState.paso=3;_alumnoRender();">← Volver</button>
+                data-action="alumnoPasoBack3">← Volver</button>
         <button type="button" class="alumno-btn alumno-btn-sec" id="alumnoOpenQuizBtn">
           🎯 Abrir quiz de comprensión
         </button>
